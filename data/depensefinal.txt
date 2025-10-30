@@ -1,0 +1,22 @@
+Question,Answer
+Quelles sont les étapes clés du processus de gestion des dépenses ?,"1  Création de la dépense par lemployé, 2  Vérification et soumission de la demande par le chef de mission, 3  Validation par le responsable, Pour commencer, accédez à linterface Dépenses en cliquant sur le bouton correspondant dans le menu principal."
+Comment démarrer la création d'une dépense dans le module ?,"Ensuite, cliquez sur Créer pour accéder au formulaire de création."
+Comment choisir le type de dépense et trouver la liste complète ?,"Choisissez le type de dépense  par exemple Per Diem ou Frais dhébergement. Si besoin, utilisez la recherche avancée pour voir la liste complète des types disponibles."
+Quelles informations dois-je remplir dans le formulaire de création de dépense ?,"Remplissez ensuite les champs du formulaire Les informations sur la dépense, Lentité qui a effectué la dépense  employé ou société, Et le compte analytique, correspondant au numéro de bon de commande de la mission, disponible dans le module Vente."
+Que faire après avoir complété le formulaire de dépense ?,"Une fois le formulaire complété, cliquez sur Sauvegarder."
+Comment ajouter une pièce justificative ?,Retournez dans le module Dépenses. Cliquez sur le bouton 'Ajouter une pièce jointe'. Sélectionnez le fichier PDF enregistré. Cliquez sur 'Ouvrir'.
+Est-il obligatoire d'ajouter une pièce justificative ?,Chaque dépense doit être accompagnée dune pièce justificative.
+Que contient le modèle de pièce justificative disponible ?,"Un modèle ou template est mis à disposition pour cela. Il contient Les dates, Le nom du bénéficiaire, Le nombre de jours concernés, Le taux journalier, Et le total, calculé automatiquement."
+Comment convertir le document justificatif en PDF ?,"Quand le document est prêt, convertissez-le en PDF. Pour cela"
+Première étape pour convertir le document en PDF ?,"1  Cliquez sur Fichier,"
+Deuxième étape pour convertir le document en PDF ?,"2  Choisissez Microsoft Print to PDF,"
+Troisième étape pour convertir le document en PDF ?,3  Puis Imprimer pour enregistrer le fichier au format PDF.
+Comment ajouter le fichier PDF comme pièce jointe dans le module Dépenses ?,"Ensuite, retournez dans le module Dépenses Cliquez sur le bouton Ajouter une pièce jointe, Sélectionnez le fichier PDF enregistré, Et cliquez sur Ouvrir."
+Comment informer le chef de mission que la dépense est prête à être vérifiée ?,"Enfin, ajoutez une note pour interpeller votre chef de mission. Mentionnez-le dans la note pour quil vérifie et soumette la demande."
+Que se passe-t-il ensuite ?,"À partir de là, cest le chef de mission qui prend le relais. Étape 2  Vérification et soumission par le chef de mission"
+Quelles sont les responsabilités du chef de mission dans la gestion des dépenses ?,"Le chef de mission doit dabord vérifier que lemployé a bien rempli tous les champs, notamment le compte analytique. Ensuite, il clique sur Créer le rapport pour générer la demande de remboursement."
+Que fait le chef de mission après avoir créé le rapport de dépense ?,"Une fois le rapport créé, il le soumet au responsable pour validation."
+Quel est le statut de la demande après soumission par le chef de mission ?,Le statut de la demande passe alors de Brouillon à Soumis. Étape 3  Validation par le responsable
+Que se passe-t-il pour le responsable ?,"Le responsable reçoit une notification par e-mail. Il peut ouvrir la Vue note de frais, consulter tous les détails, et cliquer sur Approuver pour valider la demande."
+Comment l'employé est-il informé que la demande a été validée ?,"Quand la validation est effectuée, lemployé reçoit une notification."
+Quel est le statut de la demande après validation par le responsable ?,"Le statut de la demande passe alors à Confirmé par le responsable. Étape 4  Remboursement Une fois la validation terminée, lemployé peut se rendre chez le comptable pour le règlement de la dépense."

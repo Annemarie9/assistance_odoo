@@ -1,0 +1,101 @@
+Question;Réponse
+.;
+Connexion;"Pour commencer, consultez votre e-mail et cliquez sur Accepter linvitation afin dactiver 
+votre compte. 
+Ensuite, crez votre mot de passe, confirmez-le, puis cliquez sur Confirmer. 
+Une fois cela fait, accdez  la page daccueil et cliquez sur Se connecter. 
+Entrez votre adresse e-mail et votre mot de passe, puis cliquez sur Connexion. 
+Vous tes maintenant connect  la plateforme GTHUB."
+Gestion des Contacts;"Depuis le menu principal, cliquez sur Contacts. 
+Dans longlet Contacts, cliquez sur Crer pour ouvrir le formulaire dajout dun nouveau 
+contact. 
+Slectionnez le type de client : particulier ou socit. 
+Renseignez ensuite toutes les informations demandes : nom, activit, coordonnes, et ajoutez 
+les tiquettes correspondant  son domaine dactivit. 
+Si le client a un reprsentant, cliquez sur Ajouter un contact physique, puis remplissez le 
+formulaire et cliquez sur Sauvegarder. 
+Noubliez pas de renseigner les informations lgales : statut juridique, secteur dactivit, et 
+autres lments obligatoires. 
+Enfin, cliquez sur Sauvegarder pour enregistrer le contact. 
+Vous pouvez aussi ajouter un abonn pour quun collaborateur suive les mises  jour du 
+dossier, envoyer un message, ou encore planifier une activit comme un appel, un mail ou 
+un rendez-vous  venir."
+CRM  Gestion de la Relation Client;"Un CRM, ou Customer Relationship Management, est un outil permettant de grer toutes les 
+interactions entre votre entreprise et ses clients. 
+Sur GTHUB, vous pouvez crer une piste commerciale  partir dun contact en cliquant sur 
+Opportunits, puis sur Crer. 
+Une piste est une affaire potentielle dtecte sur un client ou un prospect. 
+Une fois la piste enregistre, vous pouvez la convertir en opportunit. 
+Cliquez sur Convertir en opportunit, puis sur Crer une opportunit. 
+Chaque opportunit peut tre suivie dans le CRM. 
+Vous pouvez la modifier, joindre des fichiers, ajouter des notes, et renseigner des 
+informations supplmentaires. 
+Le suivi de lopportunit se fait  travers plusieurs tapes : 
+ 
+Vrification Go/NoGo, 
+ 
+tude et laboration de loffre, 
+ 
+Soumission, 
+ 
+Et enfin Rsultat : opportunit gagne ou perdue. 
+Lorsquune opportunit est gagne, elle passe en statut GAGN, et vous pouvez ensuite 
+tablir un devis ou une offre financire."
+Offres Financires et Devis;"Avant de crer un devis, assurez-vous de connatre les niveaux de facturation selon les 
+grades et les taux journaliers moyens. 
+Cliquez sur Devis, puis sur Crer. 
+Vous pouvez crer le devis  partir de zro, ou bien  partir dun modle existant. 
+Remplissez les informations du devis : les lignes de service, les taux journaliers, le nombre de 
+jours, et les frais associs. 
+Vous pouvez galement modifier directement les champs pour ajuster le cot total. 
+Une fois le devis valid, cliquez sur Points de contrle et cochez les vrifications 
+ncessaires. 
+Certains points doivent tre valids par un responsable qualit ou un associ. 
+Ensuite, cliquez sur Sauvegarder, puis sur Confirmer pour convertir le devis en 
+contrat. 
+Cela gnre automatiquement une mission lie au contrat."
+Missions;"Une mission est cre automatiquement  partir du contrat. 
+Vous pouvez galement crer un template de mission, cest--dire un modle rutilisable 
+pour les missions dun mme service. 
+Pour crer un template : 
+1 Cliquez sur Missions, 
+2 Puis sur Crer, 
+3 Ajoutez les phases et les tâches, 
+4 Et rattachez le template au service concern. 
+Une fois la mission gnre, cliquez sur Modifier pour la configurer : 
+ 
+Renommez la mission, 
+ 
+Ajoutez une description, 
+ 
+Dfinissez lquipe, 
+ 
+Joignez les dclarations dindpendance, 
+ 
+Et attribuez un responsable pour la validation des feuilles de temps. 
+Pendant lexcution, les tches peuvent tre assignes, planifies, et le temps pass doit tre 
+renseign. 
+Le systme calcule automatiquement la progression et le temps restant. 
+Lorsque la tche est termine, marquez-la comme Prte."
+Facturation;"La facturation est base sur la politique dfinie dans le service. 
+Les missions sont gnralement forfaitaires, donc factures selon les quantits 
+contractuelles. 
+Vous pouvez aussi configurer des contrats rcurrents pour automatiser la facturation 
+mensuelle. 
+Pour crer une facture : 
+1 Ouvrez la mission, 
+2 Cliquez sur longlet Contrat, 
+3 Puis sur Crer une facture. 
+Choisissez le type de facture : 
+ 
+Normale, 
+ 
+Acompte en pourcentage, 
+ 
+Ou Acompte  montant fixe. 
+Cliquez ensuite sur Crer et afficher la facture. 
+Vous pouvez prvisualiser la facture, puis crer une requte de paiement. 
+Celle-ci transforme la facture en statut prte  tre envoye. 
+Cliquez ensuite sur Confirmer pour comptabiliser la facture. 
+Enfin, lorsque le paiement est reu, cliquez sur Enregistrer un paiement, puis validez les 
+informations."
