@@ -1,5 +1,4 @@
 .env
-venv
 .files
-.chainlit
 __pycache__
+.chatbot_GTT_GTHUB/
