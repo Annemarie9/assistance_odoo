@@ -2,3 +2,5 @@
 .files
 __pycache__
 .chatbot_GTT_GTHUB/
+.update_file.py
+.init_documents_odoo.py
