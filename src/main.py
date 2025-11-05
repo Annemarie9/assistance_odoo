@@ -9,6 +9,7 @@ from rag_system import RAGSYTEM
 import streamlit as st
 from datetime import datetime
 
+st.set_page_config(page_title="Chatbot Assistance Odoo/GTHUB")
 print(sys.executable)
 
 # --- Charger les variables d'environnement ---
@@ -51,8 +52,26 @@ rag_system = RAGSYTEM(
 )
 
 # --- Interface Streamlit ---
-st.set_page_config(page_title="Chatbot Assistance Odoo/GTHUB", page_icon="💬")
-st.title("💬 Assistant intelligent Odoo / GTHUB")
+
+st.image("src/images/gthup.png", width=120)
+st.markdown("<h1 style='text-align:center;'>Bienvenue sur le chatbot intelligent assistant Odoo / GTHUB</h1>", unsafe_allow_html=True)
+
+# --- Politique de confidentialité ---
+@st.dialog("Politique de confidentialité")
+def show_privacy_policy():
+    st.write("""
+    Vous êtes informé(e) que cette conversation peut être enregistrée, surveillée et conservée afin d'améliorer nos services. 
+    Veuillez ne pas saisir de données privées, sensibles, personnelles ou réglementées. En utilisant ce chatbot, vous consentez à cette surveillance et à cet enregistrement. 
+    Vous reconnaissez et acceptez également que les informations que vous fournissez et les réponses que vous recevez (collectivement, le « Contenu ») 
+    puissent être utilisées pour améliorer, surveiller, maintenir et développer le chatbot et leurs offres respectives.
+    """)
+    if st.button("Fermer"):
+        st.rerun()  # Ferme le popup
+
+# Bouton pour ouvrir le popup
+if st.button("Voir la politique de confidentialité"):
+    show_privacy_policy()
+
 
 # --- Gestion session ---
 if "messages" not in st.session_state:
@@ -99,7 +118,7 @@ if user_query := st.chat_input("Posez votre question ici..."):
             final_response = rag_system.generate_response(context, user_query)
 
         except Exception as e:
-            final_response = f"❌ Une erreur s'est produite : {str(e)}"
+            final_response = f" Une erreur s'est produite : {str(e)}"
 
     # --- Afficher la réponse ---
     st.chat_message("assistant").write(final_response)
