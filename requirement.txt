@@ -1,5 +1,7 @@
 annotated-types==0.7.0
 anyio==4.7.0
+psycopg[binary]
+psycopg-pool
 asttokens==3.0.0
 certifi==2024.8.30
 colorama==0.4.6
@@ -51,8 +53,7 @@ python-dotenv
 
 
 # Database and storage
-psycopg[binary]
-psycopg-pool
+
 psutil
 
 # Document processing
