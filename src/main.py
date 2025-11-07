@@ -52,7 +52,6 @@ rag_system = RAGSYTEM(
 )
 
 # --- Interface Streamlit ---
-
 st.image("src/images/gthup.png", width=120)
 st.markdown("<h1 style='text-align:center;'>Bienvenue sur le chatbot intelligent assistant Odoo / GTHUB</h1>", unsafe_allow_html=True)
 
@@ -66,19 +65,16 @@ def show_privacy_policy():
     puissent être utilisées pour améliorer, surveiller, maintenir et développer le chatbot et leurs offres respectives.
     """)
     if st.button("Fermer"):
-        st.rerun()  # Ferme le popup
+        st.rerun()
 
-# Bouton pour ouvrir le popup
 if st.button("Voir la politique de confidentialité"):
     show_privacy_policy()
-
 
 # --- Gestion session ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "user_id" not in st.session_state:
-    # Génère un ID utilisateur temporaire unique (par exemple : "user_1234")
     st.session_state.user_id = f"user_{os.urandom(4).hex()}"
 
 # --- Afficher l'historique ---
@@ -88,8 +84,9 @@ for msg in st.session_state.messages:
 # --- Détection du type de requête ---
 def detect_query_type(user_query: str) -> str:
     keywords_markdown = [
-        "installation", "guide", "tutoriel", "documentation", "odoo", "configurer", "utilisation",
-        "module", "fonctionnalité", "explication", "comment", "readme", "doc", "setup"
+        "installation", "guide", "tutoriel", "documentation", "odoo", "configurer",
+        "utilisation", "module", "fonctionnalité", "explication", "comment", "readme",
+        "doc", "setup"
     ]
     keywords_txt = ["gthub", "odoo_gthub"]
 
@@ -100,46 +97,68 @@ def detect_query_type(user_query: str) -> str:
     else:
         return "txt"
 
+# --- Vérifie si la question est technique ---
+def is_technical_question(query: str) -> bool:
+    technical_keywords = [
+        "erreur", "error", "bug", "crash", "problème", "failed",
+        "installation", "installer", "configurer", "configuration",
+        "dépendance", "serveur", "port", "connexion", "database",
+        "authentification", "setup", "code", "debug"
+    ]
+    return any(word.lower() in query.lower() for word in technical_keywords)
+
+# --- Vérifie si la question est pertinente ---
+def is_relevant_question(query: str) -> bool:
+    relevant_keywords = [
+        "odoo", "module", "facture", "vente", "crm", "stock", "gthub",
+        "base de données", "serveur odoo", "interface odoo", "paramétrage",
+        "installation odoo", "configuration odoo"
+    ]
+    return any(word.lower() in query.lower() for word in relevant_keywords)
+
 # --- Entrée utilisateur ---
 if user_query := st.chat_input("Posez votre question ici..."):
     st.chat_message("user").write(user_query)
     st.session_state.messages.append({"role": "user", "content": user_query})
 
-    query_type = detect_query_type(user_query)
+    # --- Vérifie si la question est pertinente ---
+    if not is_relevant_question(user_query):
+        final_response = (
+            "Désolé , je ne peux répondre qu’aux questions liées à **Odoo** ou **GTHUB**.\n\n"
+            "Merci de reformuler votre question dans ce contexte."
+        )
+    else:
+        query_type = detect_query_type(user_query)
 
-    # --- Recherche et génération de la réponse ---
-    with st.spinner("Analyse et génération de la réponse..."):
-        try:
-            if query_type == "txt":
-                context = rag_system.semantic_search_markdown(user_query)
-            else:
-                context = rag_system.semantic_search(user_query)
-
-            final_response = rag_system.generate_response(context, user_query)
-
-        except Exception as e:
-            final_response = f" Une erreur s'est produite : {str(e)}"
+        # --- Cas technique ---
+        if query_type == "txt" and is_technical_question(user_query):
+            final_response = (
+                "Cette question semble concerner une **configuration** ou un **problème technique**.\n\n"
+                "Merci de contacter notre **support technique** pour obtenir une assistance personnalisée.\n\n"
+            )
+        else:
+            # --- Recherche et génération de la réponse ---
+            with st.spinner("Analyse et génération de la réponse..."):
+                try:
+                    if query_type == "txt":
+                        context = rag_system.semantic_search_markdown(user_query)
+                    else:
+                        context = rag_system.semantic_search(user_query)
+                    final_response = rag_system.generate_response(context, user_query)
+                except Exception as e:
+                    final_response = f"Une erreur s'est produite : {str(e)}"
 
     # --- Afficher la réponse ---
     st.chat_message("assistant").write(final_response)
     st.session_state.messages.append({"role": "assistant", "content": final_response})
 
-    # --- Enregistrer dans la base ---
+    # --- Sauvegarde ---
     save_conversation(
         user_id=st.session_state.user_id,
         question=user_query,
         answer=final_response
     )
 
-    # --- Sauvegarder localement ---
+    # --- Sauvegarde locale ---
     with open("messages.json", "w", encoding="utf-8") as f:
         json.dump(st.session_state.messages, f, ensure_ascii=False, indent=2)
-
-    # --- Sauvegarder dans la base de données ---
-    with psycopg.connect(db_connection_str) as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                INSERT INTO chat_history (user_id, question, answer, created_at)
-                VALUES (%s, %s, %s, %s)
-            """, (st.session_state.user_id, user_query, final_response, datetime.now()))
-            conn.commit()
