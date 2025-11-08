@@ -1,10 +1,8 @@
-import os
 import sys
 import json
 import psycopg2
-from psycopg2.extensions import cursor as Cursor  # ✅ Import du type Cursor
+from psycopg2.extensions import cursor as Cursor
 from openai import OpenAI
-from dotenv import load_dotenv
 from rag_system import RAGSYTEM
 import streamlit as st
 from datetime import datetime
@@ -12,20 +10,17 @@ from datetime import datetime
 st.set_page_config(page_title="Chatbot Assistance Odoo/GTHUB")
 print(sys.executable)
 
-# --- Charger les variables d'environnement ---
-load_dotenv()
-
 # --- Initialisation ---
 data_path = "./data"
 markdown_path = "./markdown_data"
 
-openai_client = OpenAI(api_key=os.getenv("OPENAI_KEY"))
-
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-HOST = os.getenv("HOST")
-PORT = os.getenv("PORT")
+# Utilisation des secrets Streamlit pour toutes les clés et paramètres sensibles
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+DB_NAME = st.secrets["DB_NAME"]
+DB_USER = st.secrets["DB_USER"]
+DB_PASSWORD = st.secrets["DB_PASSWORD"]
+HOST = st.secrets["HOST"]
+PORT = st.secrets["PORT"]
 
 db_connection_str = f"dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD} host={HOST} port={PORT}"
 
@@ -45,7 +40,7 @@ def save_conversation(user_id, question, answer):
 
 # --- Initialisation du système RAG ---
 rag_system = RAGSYTEM(
-    openai_client=openai_client,
+    openai_client=client,
     db_connection_str=db_connection_str,
     data_path=data_path,
     markdown_path=markdown_path
@@ -75,12 +70,12 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "user_id" not in st.session_state:
+    import os
     st.session_state.user_id = f"user_{os.urandom(4).hex()}"
 
 # --- Afficher l'historique ---
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
-    
 
 # --- Détection du type de requête ---
 def detect_query_type(user_query: str) -> str:
