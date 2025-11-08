@@ -1,4 +1,4 @@
-psycopg2-binary
+psycopg2-binary==2.9.9
 psycopg-pool
 httpcore==1.0.7
 httpx==0.28.1
