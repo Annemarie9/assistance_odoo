@@ -1,8 +1,8 @@
 import os
 import sys
 import json
-import psycopg
-from psycopg import Cursor
+import psycopg2
+from psycopg2.extensions import cursor as Cursor  # ✅ Import du type Cursor
 from openai import OpenAI
 from dotenv import load_dotenv
 from rag_system import RAGSYTEM
@@ -33,7 +33,7 @@ db_connection_str = f"dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD} hos
 def save_conversation(user_id, question, answer):
     """Sauvegarde la conversation dans la base de données"""
     try:
-        with psycopg.connect(db_connection_str) as conn:
+        with psycopg2.connect(db_connection_str) as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     INSERT INTO chat_history (user_id, question, answer, created_at)
@@ -80,6 +80,7 @@ if "user_id" not in st.session_state:
 # --- Afficher l'historique ---
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
+    
 
 # --- Détection du type de requête ---
 def detect_query_type(user_query: str) -> str:

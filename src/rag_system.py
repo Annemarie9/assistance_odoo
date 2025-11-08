@@ -1,7 +1,8 @@
 import os
-import psycopg
-from psycopg import Cursor
+import psycopg2
 from datetime import datetime
+from psycopg2.extensions import cursor as Cursor  # ✅ Import du type Cursor
+
 
 
 class RAGSYTEM:
@@ -13,7 +14,7 @@ class RAGSYTEM:
         self.markdown_path = markdown_path
 
         # --- Initialisation de la base de données ---
-        with psycopg.connect(db_connection_str) as conn:
+        with psycopg2.connect(db_connection_str) as conn:
             with conn.cursor() as cur:
                 # Activer l'extension vector
                 cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
@@ -77,7 +78,7 @@ class RAGSYTEM:
 
     # === Stockage des documents TXT ===
     def store_documents(self) -> None:
-        with psycopg.connect(self.db_connection_str) as conn:
+        with psycopg2.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
                 documents_path = [f for f in os.listdir(self.data_path) if f.endswith('.txt')]
 
@@ -93,7 +94,7 @@ class RAGSYTEM:
 
     # === Stockage des fichiers Markdown ===
     def store_markdown_documents(self, chunk_size=5000) -> None:
-        with psycopg.connect(self.db_connection_str) as conn:
+        with psycopg2.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
                 markdown_files = [f for f in os.listdir(self.markdown_path) if f.endswith('.md')]
 
@@ -115,7 +116,7 @@ class RAGSYTEM:
 
     # === Vérifie si des embeddings Markdown existent déjà ===
     def has_embeddings_markdown(self) -> bool:
-        with psycopg.connect(self.db_connection_str) as conn:
+        with psycopg2.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT COUNT(*) FROM markdown_embeddings;")
                 count = cur.fetchone()[0]
@@ -123,7 +124,7 @@ class RAGSYTEM:
 
     # === Vérifie si des embeddings TXT existent déjà ===
     def has_embeddings_txt(self) -> bool:
-        with psycopg.connect(self.db_connection_str) as conn:
+        with psycopg2.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT COUNT(*) FROM embeddings;")
                 count = cur.fetchone()[0]
@@ -132,7 +133,7 @@ class RAGSYTEM:
     # === Recherche sémantique pour fichiers TXT ===
     def semantic_search(self, user_query: str) -> str:
         user_query_embedding = self.compute_embedding(user_query)
-        with psycopg.connect(self.db_connection_str) as conn:
+        with psycopg2.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT document
@@ -146,7 +147,7 @@ class RAGSYTEM:
     # === Recherche sémantique pour fichiers Markdown ===
     def semantic_search_markdown(self, user_query: str) -> str:
         user_query_embedding = self.compute_embedding(user_query)
-        with psycopg.connect(self.db_connection_str) as conn:
+        with psycopg2.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT filename, content
