@@ -1,0 +1,38 @@
+psycopg2-binary==2.9.9
+psycopg-pool
+httpcore==1.0.7
+httpx==0.28.1
+numpy==1.26
+openai==1.57.0
+pandas==2.2.3
+pydantic==2.10.1
+pydantic_core==2.27.1
+pydantic_settings
+pytz
+tzdata
+streamlit==1.51
+python-dotenv
+# Database and storage
+
+
+
+# Document processing
+pypandoc
+markdown-it-py
+langchain-text-splitters
+beautifulsoup4
+
+# Utilities
+aiohttp
+requests
+PyYAML
+tenacity
+tqdm
+rich
+
+llama-index 
+llama-index-core 
+llama-index-llms-openai 
+llama-index-program-openai 
+llama-index-question-gen-openai
+
