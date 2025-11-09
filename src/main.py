@@ -41,7 +41,6 @@ def save_conversation(user_id, question, answer):
 # --- Initialisation du système RAG ---
 rag_system = RAGSYTEM(
     openai_client=client,
-    db_connection_str=db_connection_str,
     data_path=data_path,
     markdown_path=markdown_path
 )
