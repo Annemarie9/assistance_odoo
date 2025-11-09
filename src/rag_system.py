@@ -1,20 +1,22 @@
 import os
 import psycopg2
+import streamlit as st
 from datetime import datetime
-from psycopg2.extensions import cursor as Cursor  # ✅ Import du type Cursor
-
+from psycopg2.extensions import cursor as Cursor
 
 
 class RAGSYTEM:
 
-    def __init__(self, openai_client: str, db_connection_str: str, data_path: str, markdown_path: str):
+    def __init__(self, openai_client: str, data_path: str, markdown_path: str):
         self.openai_client = openai_client
-        self.db_connection_str = db_connection_str
         self.data_path = data_path
         self.markdown_path = markdown_path
 
+        # ✅ Connexion à la base PostgreSQL via les secrets Streamlit Cloud
+        self.db_connection_str = st.secrets["DB_CONNECTION_STR"]
+
         # --- Initialisation de la base de données ---
-        with psycopg2.connect(db_connection_str) as conn:
+        with psycopg2.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
                 # Activer l'extension vector
                 cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
@@ -90,7 +92,7 @@ class RAGSYTEM:
                         self.save_embedding(document, embedding, cur)
 
                 conn.commit()
-                print(" Tous les documents TXT ont été enregistrés.")
+                print("✅ Tous les documents TXT ont été enregistrés.")
 
     # === Stockage des fichiers Markdown ===
     def store_markdown_documents(self, chunk_size=5000) -> None:
@@ -109,10 +111,10 @@ class RAGSYTEM:
                                 embedding = self.compute_embedding(chunk)
                                 self.save_markdown_embedding(f"{md_file}_part{idx + 1}", chunk, embedding, cur)
                             except Exception as e:
-                                print(f" Erreur lors de l'enregistrement du chunk {idx + 1} de {md_file} : {e}")
+                                print(f"⚠️ Erreur lors de l'enregistrement du chunk {idx + 1} de {md_file} : {e}")
 
                 conn.commit()
-                print(" Tous les fichiers Markdown ont été enregistrés.")
+                print("✅ Tous les fichiers Markdown ont été enregistrés.")
 
     # === Vérifie si des embeddings Markdown existent déjà ===
     def has_embeddings_markdown(self) -> bool:
@@ -158,7 +160,7 @@ class RAGSYTEM:
                 result = cur.fetchone()
                 if result:
                     filename, content = result
-                    return f" **{filename}**\n\n{content}"
+                    return f"**{filename}**\n\n{content}"
                 return "Aucun fichier Markdown correspondant trouvé."
 
     # === Génération de la réponse finale ===
