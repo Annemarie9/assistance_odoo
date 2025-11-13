@@ -1,4 +1,4 @@
-psycopg2-binary==2.9.9
+psycopg[binary]
 psycopg-pool
 httpcore==1.0.7
 httpx==0.28.1
@@ -35,4 +35,4 @@ llama-index-core
 llama-index-llms-openai 
 llama-index-program-openai 
 llama-index-question-gen-openai
-#psycopg
+

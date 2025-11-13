@@ -1,27 +1,33 @@
 import os
-import psycopg2
-import streamlit as st
+import psycopg
+from psycopg import Cursor
 from datetime import datetime
-from psycopg2.extensions import cursor as Cursor
+from token_manager import TokenManager
 
 
 class RAGSYTEM:
 
-    def __init__(self, openai_client: str, data_path: str, markdown_path: str):
+    def __init__(self, openai_client: str, db_connection_str: str, data_path: str, markdown_path: str):
         self.openai_client = openai_client
+        self.db_connection_str = db_connection_str
         self.data_path = data_path
         self.markdown_path = markdown_path
 
-        # ✅ Connexion à la base PostgreSQL via les secrets Streamlit Cloud
-        self.db_connection_str = st.secrets["DB_CONNECTION_STR"]
-
-        # --- Initialisation de la base de données ---
-        with psycopg2.connect(self.db_connection_str) as conn:
+        # --- Initialisation des tables (création si absentes uniquement) ---
+        with psycopg.connect(db_connection_str) as conn:
             with conn.cursor() as cur:
                 # Activer l'extension vector
                 cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
 
-                # Table pour les fichiers .txt
+                # Tables principales
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS users (
+                        id SERIAL PRIMARY KEY,
+                        email TEXT UNIQUE NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS embeddings (
                         id serial PRIMARY KEY,
@@ -30,7 +36,6 @@ class RAGSYTEM:
                     );
                 """)
 
-                # Table pour les fichiers Markdown
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS markdown_embeddings (
                         id serial PRIMARY KEY,
@@ -40,19 +45,62 @@ class RAGSYTEM:
                     );
                 """)
 
-                # Table d'historique des conversations
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS chat_history (
                         id serial PRIMARY KEY,
-                        user_id VARCHAR(100) NOT NULL,
+                        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
                         question TEXT NOT NULL,
                         answer TEXT NOT NULL,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     );
                 """)
+
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS user_tokens (
+                        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                        tokens_used INTEGER DEFAULT 0,
+                        month_start DATE DEFAULT CURRENT_DATE,
+                        PRIMARY KEY (user_id)
+                    );
+                """)
+
                 conn.commit()
 
-    # === Helper pour calculer les embeddings ===
+    # === Gestion des utilisateurs ===
+    def get_or_create_user(self, email: str) -> int:
+        with psycopg.connect(self.db_connection_str) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT id FROM users WHERE email = %s;", (email,))
+                user = cur.fetchone()
+                if user:
+                    return user[0]
+
+                cur.execute("INSERT INTO users (email) VALUES (%s) RETURNING id;", (email,))
+                user_id = cur.fetchone()[0]
+                conn.commit()
+                return user_id
+
+    def get_user_history(self, user_id: int):
+        with psycopg.connect(self.db_connection_str) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT question, answer, created_at
+                    FROM chat_history
+                    WHERE user_id = %s
+                    ORDER BY created_at ASC;
+                """, (user_id,))
+                return cur.fetchall()
+
+    def save_conversation(self, user_id: int, question: str, answer: str):
+        with psycopg.connect(self.db_connection_str) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO chat_history (user_id, question, answer, created_at)
+                    VALUES (%s, %s, %s, %s);
+                """, (user_id, question, answer, datetime.now()))
+                conn.commit()
+
+    # === Embeddings ===
     def compute_embedding(self, document: str) -> list[float]:
         if len(document) > 15000:
             document = document[:15000]
@@ -64,26 +112,31 @@ class RAGSYTEM:
         ).data
         return embeddings[0].embedding
 
-    # === Enregistrement des embeddings TXT ===
     def save_embedding(self, document: str, embedding: list[float], cursor: Cursor) -> None:
         cursor.execute("""
             INSERT INTO embeddings (document, embedding)
             VALUES (%s, %s)
         """, (document, embedding))
 
-    # === Enregistrement des embeddings Markdown ===
     def save_markdown_embedding(self, filename: str, content: str, embedding: list[float], cursor: Cursor) -> None:
         cursor.execute("""
             INSERT INTO markdown_embeddings (filename, content, embedding)
             VALUES (%s, %s, %s)
         """, (filename, content, embedding))
 
-    # === Stockage des documents TXT ===
     def store_documents(self) -> None:
-        with psycopg2.connect(self.db_connection_str) as conn:
+        """Stocke les fichiers TXT uniquement si la table embeddings est vide"""
+        with psycopg.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
-                documents_path = [f for f in os.listdir(self.data_path) if f.endswith('.txt')]
+                # Vérifie si des embeddings existent déjà
+                cur.execute("SELECT COUNT(*) FROM embeddings;")
+                count = cur.fetchone()[0]
+                if count > 0:
+                    print("⚡ Les embeddings TXT existent déjà. Aucun recalcul nécessaire.")
+                    return
 
+                # Si vide, calcul et enregistrement
+                documents_path = [f for f in os.listdir(self.data_path) if f.endswith('.txt')]
                 for doc in documents_path:
                     file_path = os.path.join(self.data_path, doc)
                     with open(file_path, "r", encoding='utf-8', errors="replace") as file:
@@ -94,10 +147,16 @@ class RAGSYTEM:
                 conn.commit()
                 print("✅ Tous les documents TXT ont été enregistrés.")
 
-    # === Stockage des fichiers Markdown ===
     def store_markdown_documents(self, chunk_size=5000) -> None:
-        with psycopg2.connect(self.db_connection_str) as conn:
+        """Stocke les fichiers Markdown uniquement si la table est vide"""
+        with psycopg.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
+                cur.execute("SELECT COUNT(*) FROM markdown_embeddings;")
+                count = cur.fetchone()[0]
+                if count > 0:
+                    print("⚡ Les embeddings Markdown existent déjà. Aucun recalcul nécessaire.")
+                    return
+
                 markdown_files = [f for f in os.listdir(self.markdown_path) if f.endswith('.md')]
 
                 for md_file in markdown_files:
@@ -116,26 +175,10 @@ class RAGSYTEM:
                 conn.commit()
                 print("✅ Tous les fichiers Markdown ont été enregistrés.")
 
-    # === Vérifie si des embeddings Markdown existent déjà ===
-    def has_embeddings_markdown(self) -> bool:
-        with psycopg2.connect(self.db_connection_str) as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) FROM markdown_embeddings;")
-                count = cur.fetchone()[0]
-                return count > 0
-
-    # === Vérifie si des embeddings TXT existent déjà ===
-    def has_embeddings_txt(self) -> bool:
-        with psycopg2.connect(self.db_connection_str) as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT COUNT(*) FROM embeddings;")
-                count = cur.fetchone()[0]
-                return count > 0
-
-    # === Recherche sémantique pour fichiers TXT ===
+    # === Recherche sémantique ===
     def semantic_search(self, user_query: str) -> str:
         user_query_embedding = self.compute_embedding(user_query)
-        with psycopg2.connect(self.db_connection_str) as conn:
+        with psycopg.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT document
@@ -146,10 +189,9 @@ class RAGSYTEM:
                 result = cur.fetchone()
                 return result[0] if result else "Aucun résultat trouvé."
 
-    # === Recherche sémantique pour fichiers Markdown ===
     def semantic_search_markdown(self, user_query: str) -> str:
         user_query_embedding = self.compute_embedding(user_query)
-        with psycopg2.connect(self.db_connection_str) as conn:
+        with psycopg.connect(self.db_connection_str) as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     SELECT filename, content
@@ -163,8 +205,8 @@ class RAGSYTEM:
                     return f"**{filename}**\n\n{content}"
                 return "Aucun fichier Markdown correspondant trouvé."
 
-    # === Génération de la réponse finale ===
-    def generate_response(self, context: str, user_query: str):
+    # === Génération de réponse et suivi de tokens ===
+    def generate_response_with_usage(self, context: str, user_query: str):
         MAX_CONTEXT_LENGTH = 100000
         if len(context) > MAX_CONTEXT_LENGTH:
             context = context[:MAX_CONTEXT_LENGTH]
@@ -175,11 +217,22 @@ class RAGSYTEM:
                 {
                     "role": "system",
                     "content": (
-                        f"Tu es un assistant de la documentation Odoo et locale. "
-                        f"Réponds à la question suivante : {user_query}, "
-                        f"en utilisant ces informations : {context}"
+                        "Tu es un assistant spécialisé dans Odoo et GTHUB. "
+                        "Réponds de manière claire, concise et utile aux utilisateurs."
                     ),
-                }
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Question : {user_query}\n\n"
+                        f"Contexte pertinent : {context}"
+                    ),
+                },
             ],
+            max_tokens=500,
         )
-        return completion.choices[0].message.content
+
+        response_text = completion.choices[0].message.content
+        usage = completion.usage  # contient total_tokens, prompt_tokens, completion_tokens
+
+        return response_text, usage
