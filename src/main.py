@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 from rag_system import RAGSYTEM
 import streamlit as st
 from datetime import datetime
-from  token_manager import TokenManager
+from token_manager import TokenManager
+import hashlib
+
 # --- Configuration Streamlit ---
 st.set_page_config(page_title="Chatbot Assistance Odoo / GTHUB")
 print(sys.executable)
@@ -37,6 +39,56 @@ rag_system = RAGSYTEM(
 token_manager = TokenManager(db_connection_str)
 
 
+# --- Fonctions d'authentification ---
+def hash_password(password: str) -> str:
+    """Hash le mot de passe avec SHA256"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+
+def create_user(prenom: str, nom: str, email: str, password: str) -> tuple:
+    """Crée un nouvel utilisateur dans la base de données"""
+    try:
+        with psycopg.connect(db_connection_str) as conn:
+            with conn.cursor() as cur:
+                # Vérifier si l'email existe déjà
+                cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+                if cur.fetchone():
+                    return None, "Cet email est déjà utilisé."
+
+                # Insérer le nouvel utilisateur
+                hashed_pwd = hash_password(password)
+                cur.execute(
+                    """INSERT INTO users (prenom, nom, email, password, created_at)
+                       VALUES (%s, %s, %s, %s, %s) RETURNING id""",
+                    (prenom, nom, email, hashed_pwd, datetime.now())
+                )
+                user_id = cur.fetchone()[0]
+                conn.commit()
+                return user_id, "Compte créé avec succès!"
+    except Exception as e:
+        return None, f"Erreur lors de la création du compte: {str(e)}"
+
+
+def authenticate_user(email: str, password: str) -> tuple:
+    """Authentifie un utilisateur"""
+    try:
+        with psycopg.connect(db_connection_str) as conn:
+            with conn.cursor() as cur:
+                hashed_pwd = hash_password(password)
+                cur.execute(
+                    """SELECT id, prenom, nom FROM users
+                       WHERE email = %s AND password = %s""",
+                    (email, hashed_pwd)
+                )
+                result = cur.fetchone()
+                if result:
+                    return result[0], result[1], result[2], "Connexion réussie!"
+                else:
+                    return None, None, None, "Email ou mot de passe incorrect."
+    except Exception as e:
+        return None, None, None, f"Erreur de connexion: {str(e)}"
+
+
 # --- Logo et titre ---
 st.image("src/images/gthup.png", width=120)
 st.markdown("<h1 style='text-align:center;'>Bienvenue sur le Chatbot Intelligent Odoo / GTHUB</h1>", unsafe_allow_html=True)
@@ -45,8 +97,8 @@ st.markdown("<h1 style='text-align:center;'>Bienvenue sur le Chatbot Intelligent
 @st.dialog("Politique de confidentialité")
 def show_privacy_policy():
     st.write("""
-    Vous êtes informé(e) que cette conversation peut être enregistrée, surveillée et conservée afin d'améliorer nos services. 
-    Veuillez ne pas saisir de données privées, sensibles, personnelles ou réglementées. En utilisant ce chatbot, vous consentez à cette surveillance et à cet enregistrement. 
+    Vous êtes informé(e) que cette conversation peut être enregistrée, surveillée et conservée afin d'améliorer nos services.
+    Veuillez ne pas saisir de données privées, sensibles, personnelles ou réglementées. En utilisant ce chatbot, vous consentez à cette surveillance et à cet enregistrement.
     """)
     if st.button("Fermer"):
         st.rerun()
@@ -54,29 +106,86 @@ def show_privacy_policy():
 if st.button("Voir la politique de confidentialité"):
     show_privacy_policy()
 
-# --- Étape 1 : Connexion utilisateur ---
-if "email" not in st.session_state:
-    st.markdown("###  Connexion utilisateur")
-    email = st.text_input("Entrez votre adresse e-mail pour continuer :")
+# --- Étape 1 : Authentification ---
+if "user_id" not in st.session_state:
+    st.markdown("### 🔐 Authentification")
 
-    if st.button("Se connecter"):
-        if not email or "@" not in email:
-            st.error("Veuillez saisir une adresse e-mail valide.")
-        else:
-            user_id = rag_system.get_or_create_user(email)
-            st.session_state.email = email
-            st.session_state.user_id = user_id
-            st.success(f"Bienvenue {email} !")
-            st.rerun()
+    # Choix entre connexion et inscription
+    auth_choice = st.radio("", ["Se connecter", "S'inscrire"], horizontal=True)
+
+    if auth_choice == "S'inscrire":
+        st.markdown("#### Créer un compte")
+
+        with st.form("signup_form"):
+            prenom = st.text_input("Prénom *")
+            nom = st.text_input("Nom *")
+            email = st.text_input("Adresse e-mail *")
+            password = st.text_input("Mot de passe *", type="password")
+            confirm_password = st.text_input("Confirmer le mot de passe *", type="password")
+
+            submit_button = st.form_submit_button("Créer mon compte")
+
+            if submit_button:
+                if not prenom or not nom or not email or not password:
+                    st.error("Tous les champs sont obligatoires.")
+                elif "@" not in email:
+                    st.error("Veuillez saisir une adresse e-mail valide.")
+                elif len(password) < 6:
+                    st.error("Le mot de passe doit contenir au moins 6 caractères.")
+                elif password != confirm_password:
+                    st.error("Les mots de passe ne correspondent pas.")
+                else:
+                    user_id, message = create_user(prenom, nom, email, password)
+                    if user_id:
+                        st.session_state.user_id = user_id
+                        st.session_state.prenom = prenom
+                        st.session_state.nom = nom
+                        st.session_state.email = email
+                        st.success(message)
+                        st.rerun()
+                    else:
+                        st.error(message)
+
+    else:  # Se connecter
+        st.markdown("#### Se connecter")
+
+        with st.form("login_form"):
+            email = st.text_input("Adresse e-mail")
+            password = st.text_input("Mot de passe", type="password")
+
+            submit_button = st.form_submit_button("Se connecter")
+
+            if submit_button:
+                if not email or not password:
+                    st.error("Veuillez remplir tous les champs.")
+                else:
+                    user_id, prenom, nom, message = authenticate_user(email, password)
+                    if user_id:
+                        st.session_state.user_id = user_id
+                        st.session_state.prenom = prenom
+                        st.session_state.nom = nom
+                        st.session_state.email = email
+                        st.success(message)
+                        st.rerun()
+                    else:
+                        st.error(message)
+
     st.stop()
+
+# --- Affichage de l'utilisateur connecté ---
+col1, col2 = st.columns([4, 1])
+with col1:
+    st.markdown(f"**Connecté en tant que:** {st.session_state.prenom} {st.session_state.nom}")
+with col2:
+    if st.button("Se déconnecter"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
 
 # --- Étape 2 : Charger ou initialiser les messages ---
 if "messages" not in st.session_state:
-
-
     st.session_state.messages = []
 
-   
 # --- Afficher l'historique de la session ---
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
@@ -130,7 +239,7 @@ if user_query := st.chat_input("Posez votre question ici..."):
     # Vérification de pertinence
     if not is_relevant_question(user_query):
         final_response = (
-            "Désolé, je ne peux répondre qu’aux questions liées à **Odoo** ou **GTHUB**.\n\n"
+            "Désolé, je ne peux répondre qu'aux questions liées à **Odoo** ou **GTHUB**.\n\n"
             "Merci de reformuler votre question dans ce contexte."
         )
     else:
@@ -149,15 +258,11 @@ if user_query := st.chat_input("Posez votre question ici..."):
                     else:
                         context = rag_system.semantic_search(user_query)
 
-                    final_response , usage = rag_system.generate_response_with_usage(context, user_query)
+                    final_response, usage = rag_system.generate_response_with_usage(context, user_query)
                     tokens_used = usage.prompt_tokens + usage.completion_tokens
                     token_manager.update_user_tokens(st.session_state.user_id, tokens_used)
                 except Exception as e:
                     final_response = f"Une erreur s'est produite : {str(e)}"
-
-
-
-
 
     # --- Affichage et enregistrement ---
     st.chat_message("assistant").write(final_response)
