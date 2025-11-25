@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   ai_chat:
     build:
@@ -11,9 +13,28 @@ services:
     restart: unless-stopped
     networks:
       - ai_chat_network
+    depends_on:
+      - postgres
     command: >
       sh -c "python src/store_data.py && streamlit run src/main.py --server.address=0.0.0.0"
-  
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api_flask
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - ai_chat_network
+    depends_on:
+      - postgres
+    command: >
+      sh -c "python src/api.py"
+
   postgres:
     image: ankane/pgvector
     container_name: postgres_pgvector
@@ -22,17 +43,20 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - "${PORT}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./.env:/app/.env:ro
     restart: unless-stopped
     networks:
       - ai_chat_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:
-  
 
 networks:
   ai_chat_network:

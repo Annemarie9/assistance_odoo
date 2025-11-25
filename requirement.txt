@@ -1,20 +1,36 @@
+# Flask API Dependencies (AJOUTÉ)
+flask==3.0.0
+flask-cors==4.0.0
+
+# Database and storage
 psycopg[binary]
 psycopg-pool
+
+# HTTP clients
 httpcore==1.0.7
 httpx==0.28.1
+
+# Data processing
 numpy==1.26
-openai==1.57.0
 pandas==2.2.3
+
+# OpenAI
+openai==1.57.0
+
+# Validation
 pydantic==2.10.1
 pydantic_core==2.27.1
 pydantic_settings
+
+# Timezone
 pytz
 tzdata
+
+# Streamlit
 streamlit==1.51
+
+# Environment
 python-dotenv
-# Database and storage
-
-
 
 # Document processing
 pypandoc
@@ -30,9 +46,9 @@ tenacity
 tqdm
 rich
 
-llama-index 
-llama-index-core 
-llama-index-llms-openai 
-llama-index-program-openai 
+# LlamaIndex
+llama-index
+llama-index-core
+llama-index-llms-openai
+llama-index-program-openai
 llama-index-question-gen-openai
-
