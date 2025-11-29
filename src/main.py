@@ -108,7 +108,7 @@ if st.button("Voir la politique de confidentialité"):
 
 # --- Étape 1 : Authentification ---
 if "user_id" not in st.session_state:
-    st.markdown("### 🔐 Authentification")
+    st.markdown("###  Authentification")
 
     # Choix entre connexion et inscription
     auth_choice = st.radio("", ["Se connecter", "S'inscrire"], horizontal=True)
@@ -172,15 +172,35 @@ if "user_id" not in st.session_state:
 
     st.stop()
 
-# --- Affichage de l'utilisateur connecté ---
-col1, col2 = st.columns([4, 1])
-with col1:
-    st.markdown(f"**Connecté en tant que:** {st.session_state.prenom} {st.session_state.nom}")
-with col2:
-    if st.button("Se déconnecter"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        st.rerun()
+# --- SIDEBAR ---
+st.sidebar.image("src/images/gthup.png", width=110)
+st.sidebar.markdown(f"### 👤 {st.session_state.prenom} {st.session_state.nom}")
+
+# Bouton déconnexion
+if st.sidebar.button(" Se déconnecter"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
+
+# afficher historique
+show_history = st.sidebar.checkbox(" Historique des conversations")
+if show_history:
+    st.sidebar.markdown("###  Historique")
+
+    if st.session_state.messages:
+        for msg in st.session_state.messages:
+            role = "Utilisateur" if msg["role"] == "user" else " Assistant"
+            st.sidebar.markdown(f"**{role} :** {msg['content'][:80]}...")
+    else:
+        st.sidebar.info("Aucune conversation enregistrée.")
+if st.sidebar.button(" Supprimer tout l’historique"):
+    st.session_state.messages = {}
+    st.sidebar.success("Historique supprimé.")
+    st.rerun()
+
+# --- Zone principale ---
+#st.markdown(f"**Connecté en tant que:** {st.session_state.prenom} {st.session_state.nom}")
+
 
 # --- Étape 2 : Charger ou initialiser les messages ---
 if "messages" not in st.session_state:
@@ -189,7 +209,6 @@ if "messages" not in st.session_state:
 # --- Afficher l'historique de la session ---
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
-
 # --- Fonctions utilitaires ---
 def detect_query_type(user_query: str) -> str:
     keywords_markdown = [
@@ -227,13 +246,22 @@ def is_relevant_question(query: str) -> bool:
 
 
 # --- Étape 3 : Chat ---
+st.html(
+    """
+  <style>
+    [class*="st-key-user"] {
+        background-color: #b39ddb; /* Mauve */
+    }
+  </style>
+    """
+)
 if user_query := st.chat_input("Posez votre question ici..."):
     st.chat_message("user").write(user_query)
     st.session_state.messages.append({"role": "user", "content": user_query})
 
     # Vérifier si l'utilisateur a atteint sa limite
     if token_manager.has_reached_limit(st.session_state.user_id):
-        st.warning("Vous avez atteint votre limite mensuelle de 2000 tokens.")
+        st.warning("Vous avez atteint votre limite mensuelle de tokens.")
         st.stop()
 
     # Vérification de pertinence

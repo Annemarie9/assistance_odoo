@@ -2,7 +2,7 @@
 import psycopg
 from datetime import date, timedelta
 
-MAX_TOKENS_PER_MONTH = 2000
+MAX_TOKENS_PER_MONTH = 50000
 
 class TokenManager:
     def __init__(self, db_connection_str):

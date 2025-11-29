@@ -157,6 +157,128 @@ def create_user():
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+# ================== ENDPOINTS CONVERSATIONS ==================
+
+@app.route('/api/conversations', methods=['GET'])
+def get_all_conversations():
+    """Récupérer toutes les conversations"""
+    try:
+        with psycopg.connect(db_connection_str) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT ch.id, ch.user_id, u.prenom, u.nom, u.email,  
+                           ch.question, ch.answer, ch.created_at
+                    FROM chat_history ch
+                    JOIN users u ON ch.user_id = u.id
+                    ORDER BY ch.created_at DESC
+                """)
+                conversations = cur.fetchall()
+
+                conv_list = []
+                for conv in conversations:
+                    conv_list.append({
+                        "id": conv[0],
+                        "user_id": conv[1],
+                        "user": {
+                            "prenom": conv[2],
+                            "nom": conv[3],
+                            "email": conv[4]
+                        },
+                        "question": conv[5],
+                        "answer": conv[6],
+                        "created_at": conv[7].isoformat() if conv[7] else None
+                    })
+
+                return jsonify({
+                    "success": True,
+                    "count": len(conv_list),
+                    "conversations": conv_list
+                }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/users/<int:user_id>/conversations', methods=['GET'])    
+def get_user_conversations(user_id):
+    """Récupérer les conversations d'un utilisateur spécifique"""        
+    try:
+        with psycopg.connect(db_connection_str) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT ch.id, ch.question, ch.answer, ch.created_at  
+                    FROM chat_history ch
+                    WHERE ch.user_id = %s
+                    ORDER BY ch.created_at DESC
+                """, (user_id,))
+                conversations = cur.fetchall()
+
+                conv_list = []
+                for conv in conversations:
+                    conv_list.append({
+                        "id": conv[0],
+                        "question": conv[1],
+                        "answer": conv[2],
+                        "created_at": conv[3].isoformat() if conv[3] else None
+                    })
+
+                return jsonify({
+                    "success": True,
+                    "user_id": user_id,
+                    "count": len(conv_list),
+                    "conversations": conv_list
+                }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/users/email/<email>/conversations', methods=['GET'])    
+def get_user_conversations_by_email(email):
+    """Récupérer les conversations d'un utilisateur par email"""
+    try:
+        with psycopg.connect(db_connection_str) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT ch.id, ch.user_id, u.prenom, u.nom,
+                           ch.question, ch.answer, ch.created_at
+                    FROM chat_history ch
+                    JOIN users u ON ch.user_id = u.id
+                    WHERE u.email = %s
+                    ORDER BY ch.created_at DESC
+                """, (email,))
+                conversations = cur.fetchall()
+
+                conv_list = []
+                for conv in conversations:
+                    conv_list.append({
+                        "id": conv[0],
+                        "user_id": conv[1],
+                        "user": {
+                            "prenom": conv[2],
+                            "nom": conv[3],
+                            "email": email
+                        },
+                        "question": conv[4],
+                        "answer": conv[5],
+                        "created_at": conv[6].isoformat() if conv[6] else None
+                    })
+
+                return jsonify({
+                    "success": True,
+                    "email": email,
+                    "count": len(conv_list),
+                    "conversations": conv_list
+                }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 # ================== (les autres endpoints restent inchangés) ==================
 
@@ -171,5 +293,5 @@ def health_check():
 
 
 if __name__ == '__main__':
-    print("🚀 API Flask démarre sur http://0.0.0.0:5000 ...")
+    print("API Flask démarre sur http://0.0.0.0:5000 ...")
     app.run(debug=True, host='0.0.0.0', port=5000)

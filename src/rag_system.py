@@ -132,7 +132,7 @@ class RAGSYTEM:
                 cur.execute("SELECT COUNT(*) FROM embeddings;")
                 count = cur.fetchone()[0]
                 if count > 0:
-                    print("⚡ Les embeddings TXT existent déjà. Aucun recalcul nécessaire.")
+                    print(" Les embeddings TXT existent déjà. Aucun recalcul nécessaire.")
                     return
 
                 # Si vide, calcul et enregistrement
@@ -145,7 +145,7 @@ class RAGSYTEM:
                         self.save_embedding(document, embedding, cur)
 
                 conn.commit()
-                print("✅ Tous les documents TXT ont été enregistrés.")
+                print(" Tous les documents TXT ont été enregistrés.")
 
     def store_markdown_documents(self, chunk_size=5000) -> None:
         """Stocke les fichiers Markdown uniquement si la table est vide"""
@@ -154,7 +154,7 @@ class RAGSYTEM:
                 cur.execute("SELECT COUNT(*) FROM markdown_embeddings;")
                 count = cur.fetchone()[0]
                 if count > 0:
-                    print("⚡ Les embeddings Markdown existent déjà. Aucun recalcul nécessaire.")
+                    print(" Les embeddings Markdown existent déjà. Aucun recalcul nécessaire.")
                     return
 
                 markdown_files = [f for f in os.listdir(self.markdown_path) if f.endswith('.md')]
@@ -170,10 +170,10 @@ class RAGSYTEM:
                                 embedding = self.compute_embedding(chunk)
                                 self.save_markdown_embedding(f"{md_file}_part{idx + 1}", chunk, embedding, cur)
                             except Exception as e:
-                                print(f"⚠️ Erreur lors de l'enregistrement du chunk {idx + 1} de {md_file} : {e}")
+                                print(f"Erreur lors de l'enregistrement du chunk {idx + 1} de {md_file} : {e}")
 
                 conn.commit()
-                print("✅ Tous les fichiers Markdown ont été enregistrés.")
+                print(" Tous les fichiers Markdown ont été enregistrés.")
 
     # === Recherche sémantique ===
     def semantic_search(self, user_query: str) -> str:
